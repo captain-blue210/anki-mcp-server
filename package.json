@@ -1,6 +1,6 @@
 {
   "name": "anki-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -8,7 +8,9 @@
     "start": "node dist/index.js",
     "dev": "ts-node --esm src/index.ts",
     "test-server": "node scripts/test-server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:test": "cross-env NODE_ENV=test node dist/index.js",
+    "dev:test": "cross-env NODE_ENV=test ts-node --esm src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.11",
+    "cross-env": "^7.0.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   }
