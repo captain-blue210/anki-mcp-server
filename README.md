@@ -6,6 +6,7 @@ An MCP (Model Context Protocol) server for Claude Desktop that connects to Anki 
 
 - Connects to Anki via AnkiConnect API
 - Retrieves cards with "leech" tags
+- Adds date-stamped review tags to cards
 - Provides comprehensive card data for analysis by Claude
 - Can be used with Claude Desktop
 
@@ -47,8 +48,31 @@ Then edit the `.env` file to customize your settings:
 | ---------------------- | ------------------------------------------ | ----------------------- |
 | `ANKI_CONNECT_URL`     | The URL of the Anki Connect API            | `http://localhost:8765` |
 | `ANKI_CONNECT_VERSION` | The version of the Anki Connect API to use | `6`                     |
+| `ANKI_MOCK_MODE`       | Enable mock mode for testing (true/false)  | `false`                 |
 
 If the environment variables are not set, the server will use the default values.
+
+### Test Configuration
+
+For testing, a separate configuration file `.env.test` is provided:
+
+```
+cp .env.example .env.test
+```
+
+Edit `.env.test` to set test-specific values:
+
+```
+ANKI_CONNECT_URL=http://localhost:8765
+ANKI_CONNECT_VERSION=6
+ANKI_MOCK_MODE=true
+```
+
+To run in test mode:
+
+```
+npm run start:test
+```
 
 ## Usage
 
@@ -75,7 +99,7 @@ To use this MCP server with Claude Desktop:
   "mcpServers": {
     "anki": {
       "command": "node",
-      "args": ["Users/captain-blue/GitHub/anki-mcp-server/dist/index.js"]
+      "args": ["path/to/anki-mcp-server/dist/index.js"]
     }
   }
 }
@@ -85,7 +109,9 @@ Replace `"path/to/anki-mcp-server"` with the actual path to where you cloned thi
 
 ## MCP Tool Usage
 
-Once configured, you can use the `get_leech_cards` tool in Claude:
+Once configured, you can use the following tools in Claude:
+
+### Example Usage
 
 ```
 Could you analyze my Anki leech cards and suggest ways to improve my study?
@@ -103,11 +129,50 @@ Parameters:
 - `detailed` (optional, boolean, default: true): Whether to return comprehensive card data or just IDs
 - `count` (optional, number): Number of random cards to return (defaults to all cards)
 
+### tag_reviewed_cards
+
+Adds a date-stamped "reviewed" tag to specified cards. This allows you to track which cards you've reviewed with Claude.
+
+Parameters:
+- `card_ids` (required, array of numbers): Array of card IDs to tag as reviewed
+- `custom_tag_prefix` (optional, string, default: "見直し"): Custom prefix for the tag
+
+The tag will be in the format `見直し_YYYYMMDD` (or your custom prefix if specified).
+
+Example usage in Claude:
+```
+I've reviewed these cards, please tag them as reviewed: [1234567890, 1234567891]
+```
+
 ## Troubleshooting
 
 - **"Could not connect to Anki"** - Make sure Anki is running and AnkiConnect is properly installed
 - **"No leech cards found"** - You don't have any cards tagged as "leech" in Anki
 - **Other connection issues** - Check that AnkiConnect is configured to allow connections from localhost/your local IP address (port 8765)
+- **Tag not appearing** - Make sure you're providing valid card IDs to the `tag_reviewed_cards` tool
+
+## Testing Mode
+
+For testing without affecting actual Anki data, you can use the mock mode:
+
+1. Set `ANKI_MOCK_MODE=true` in your `.env` file or use the provided `.env.test` file
+2. Run the server with `npm run start:test`
+
+In mock mode, the server will simulate all Anki operations without actually connecting to Anki. This is useful for testing Claude integrations without risking data changes.
+
+## Development
+
+To run the server in development mode with hot reloading:
+
+```
+npm run dev
+```
+
+For development with mock mode enabled:
+
+```
+npm run dev:test
+```
 
 ## License
 
