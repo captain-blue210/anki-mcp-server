@@ -52,6 +52,22 @@ Then edit the `.env` file to customize your settings:
 
 If the environment variables are not set, the server will use the default values.
 
+### Finding Your Local IP Address for AnkiConnect
+
+If connecting to `localhost` doesn't work, you'll need to use your computer's local IP address instead. Configure your `.env` file with:
+
+```
+ANKI_CONNECT_URL=http://YOUR_LOCAL_IP:8765
+```
+
+To find your local IP address:
+
+- **macOS**: Open Terminal and run `ifconfig` or `ipconfig getifaddr en0` (for WiFi)
+- **Windows**: Open Command Prompt and run `ipconfig`
+- **Linux**: Open Terminal and run `ip addr show` or `hostname -I`
+
+Look for IPv4 addresses like `192.168.x.x` or `10.x.x.x` in the output.
+
 ### Test Configuration
 
 For testing, a separate configuration file `.env.test` is provided:
@@ -148,7 +164,11 @@ I've reviewed these cards, please tag them as reviewed: [1234567890, 1234567891]
 
 - **"Could not connect to Anki"** - Make sure Anki is running and AnkiConnect is properly installed
 - **"No leech cards found"** - You don't have any cards tagged as "leech" in Anki
-- **Other connection issues** - Check that AnkiConnect is configured to allow connections from localhost/your local IP address (port 8765)
+- **Connection issues with localhost** - If you're unable to connect using `localhost`:
+  1. Find your local IP address as described in the Configuration section
+  2. Update your `.env` file to use `ANKI_CONNECT_URL=http://YOUR_LOCAL_IP:8765`
+  3. Make sure AnkiConnect is configured to allow connections from your IP address
+  4. Restart the MCP server after making these changes
 - **Tag not appearing** - Make sure you're providing valid card IDs to the `tag_reviewed_cards` tool
 
 ## Testing Mode
