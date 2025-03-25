@@ -9,32 +9,34 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import axios, { AxiosError } from "axios";
 import * as dotenv from "dotenv";
-import * as path from "path";
 import * as fs from "fs";
+import * as path from "path";
 
 // Get the root directory of the project
 const rootDir = path.resolve(path.dirname(process.argv[1]), "..");
 console.error(`Project root directory: ${rootDir}`);
 
 // Load environment variables based on NODE_ENV
-if (process.env.NODE_ENV === 'test') {
-  const testEnvPath = path.join(rootDir, '.env.test');
+if (process.env.NODE_ENV === "test") {
+  const testEnvPath = path.join(rootDir, ".env.test");
   console.error(`Loading test environment from ${testEnvPath}`);
-  
+
   if (fs.existsSync(testEnvPath)) {
     dotenv.config({ path: testEnvPath });
   } else {
     console.error(`Warning: Test environment file not found at ${testEnvPath}`);
-    dotenv.config({ path: path.join(rootDir, '.env') });
+    dotenv.config({ path: path.join(rootDir, ".env") });
   }
 } else {
-  const envPath = path.join(rootDir, '.env');
+  const envPath = path.join(rootDir, ".env");
   console.error(`Loading standard environment from ${envPath}`);
-  
+
   if (fs.existsSync(envPath)) {
     dotenv.config({ path: envPath });
   } else {
-    console.error(`Warning: Environment file not found at ${envPath}, using defaults`);
+    console.error(
+      `Warning: Environment file not found at ${envPath}, using defaults`
+    );
   }
 }
 
@@ -44,7 +46,7 @@ const ANKI_CONNECT_URL =
 const ANKI_CONNECT_VERSION = process.env.ANKI_CONNECT_VERSION
   ? parseInt(process.env.ANKI_CONNECT_VERSION)
   : 6;
-const ANKI_MOCK_MODE = process.env.ANKI_MOCK_MODE === 'true';
+const ANKI_MOCK_MODE = process.env.ANKI_MOCK_MODE === "true";
 
 // Log the current configuration
 console.error(`Starting anki-mcp-server with configuration:`);
@@ -100,7 +102,9 @@ class AnkiConnectClient {
     });
 
     if (this.mockMode) {
-      console.error("AnkiConnectClient initialized in MOCK MODE - no actual Anki operations will be performed");
+      console.error(
+        "AnkiConnectClient initialized in MOCK MODE - no actual Anki operations will be performed"
+      );
     }
   }
 
@@ -174,32 +178,35 @@ class AnkiConnectClient {
   /**
    * Generate mock responses for testing
    */
-  private getMockResponse<T>(action: string, params: Record<string, any> = {}): T {
+  private getMockResponse<T>(
+    action: string,
+    params: Record<string, any> = {}
+  ): T {
     console.error(`[MOCK] AnkiConnect action: ${action}`);
     console.error(`[MOCK] Params: ${JSON.stringify(params, null, 2)}`);
 
     switch (action) {
       case "version":
         return "6" as unknown as T;
-      
+
       case "findCards":
         // Mock finding leech cards - return 3 fake card IDs
         return [1234567890, 1234567891, 1234567892] as unknown as T;
-      
+
       case "cardsInfo":
         // Mock card info
         const cardIds = params.cards || [];
         return cardIds.map((cardId: number) => ({
           cardId,
-          note: cardId + 1000000,  // Mock note ID
+          note: cardId + 1000000, // Mock note ID
           deckName: "Mock Deck",
           modelName: "Mock Model",
           interval: 10,
-          factor: 2500,  // Anki stores this as factor*1000
+          factor: 2500, // Anki stores this as factor*1000
           reps: 5,
           lapses: 2,
         })) as unknown as T;
-      
+
       case "notesInfo":
         // Mock note info
         const noteIds = params.notes || [];
@@ -212,12 +219,16 @@ class AnkiConnectClient {
             Back: { value: "Mock back content", order: 1 },
           },
         })) as unknown as T;
-      
+
       case "addTags":
         // Mock adding tags
-        console.error(`[MOCK] Would add tag "${params.tags}" to notes: ${params.notes.join(", ")}`);
+        console.error(
+          `[MOCK] Would add tag "${params.tags}" to notes: ${params.notes.join(
+            ", "
+          )}`
+        );
         return true as unknown as T;
-      
+
       default:
         console.error(`[MOCK] Unknown action: ${action}`);
         return null as unknown as T;
@@ -225,11 +236,15 @@ class AnkiConnectClient {
   }
 
   /**
-   * Find all cards with the leech tag
+   * Find all cards with the leech tag, excluding those with yesterday's review tag
    */
   async findLeechCards(): Promise<number[]> {
+    // Generate yesterday's review tag to exclude
+    const yesterdayTag = this.generateYesterdayReviewedTag();
+
+    // Construct query to find leech cards but exclude those with yesterday's review tag
     return this.request<number[]>("findCards", {
-      query: "tag:leech",
+      query: `tag:leech -tag:${yesterdayTag}`,
     });
   }
 
@@ -331,15 +346,32 @@ class AnkiConnectClient {
   private generateReviewedTag(customPrefix: string = "見直し"): string {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${customPrefix}_${year}${month}${day}`;
+  }
+
+  /**
+   * Generate a tag with yesterday's date in format "見直し_yyyyMMdd"
+   */
+  private generateYesterdayReviewedTag(
+    customPrefix: string = "見直し"
+  ): string {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const year = yesterday.getFullYear();
+    const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+    const day = String(yesterday.getDate()).padStart(2, "0");
     return `${customPrefix}_${year}${month}${day}`;
   }
 
   /**
    * Add "reviewed" tag to specified cards
    */
-  async addTagsToCards(cardIds: number[], customTagPrefix?: string): Promise<boolean> {
+  async addTagsToCards(
+    cardIds: number[],
+    customTagPrefix?: string
+  ): Promise<boolean> {
     if (cardIds.length === 0) {
       console.error("No cards provided to tag");
       return false;
@@ -352,8 +384,8 @@ class AnkiConnectClient {
       });
 
       // Extract unique note IDs
-      const noteIds = [...new Set(cardsInfo.map(card => card.note))];
-      
+      const noteIds = [...new Set(cardsInfo.map((card) => card.note))];
+
       if (noteIds.length === 0) {
         console.error("Could not find note IDs for the provided card IDs");
         return false;
@@ -361,14 +393,16 @@ class AnkiConnectClient {
 
       // Generate the tag with current date
       const reviewedTag = this.generateReviewedTag(customTagPrefix);
-      
+
       // Add the tag to all notes
       const result = await this.request<boolean>("addTags", {
         notes: noteIds,
         tags: reviewedTag,
       });
-      
-      console.error(`Tag '${reviewedTag}' added to ${noteIds.length} notes (from ${cardIds.length} cards)`);
+
+      console.error(
+        `Tag '${reviewedTag}' added to ${noteIds.length} notes (from ${cardIds.length} cards)`
+      );
       return result;
     } catch (error) {
       console.error("Error adding tags to cards:", error);
@@ -476,7 +510,7 @@ class AnkiMcpServer {
               card_ids: {
                 type: "array",
                 items: {
-                  type: "number"
+                  type: "number",
                 },
                 description: "Array of card IDs to tag as reviewed",
               },
@@ -512,10 +546,10 @@ class AnkiMcpServer {
         switch (request.params.name) {
           case "get_leech_cards":
             return await this.handleGetLeechCards(request);
-          
+
           case "tag_reviewed_cards":
             return await this.handleTagReviewedCards(request);
-          
+
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -658,13 +692,18 @@ class AnkiMcpServer {
     }
 
     // Add tags to cards
-    const success = await this.ankiClient.addTagsToCards(cardIds, customTagPrefix);
+    const success = await this.ankiClient.addTagsToCards(
+      cardIds,
+      customTagPrefix
+    );
 
     if (success) {
       const now = new Date();
-      const tagDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const tagDate = `${now.getFullYear()}${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
       const tagPrefix = customTagPrefix || "見直し";
-      
+
       return {
         content: [
           {
