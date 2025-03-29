@@ -153,7 +153,7 @@ Parameters:
 - `card_ids` (required, array of numbers): Array of card IDs to tag as reviewed
 - `custom_tag_prefix` (optional, string, default: "見直し"): Custom prefix for the tag
 
-The tag will be in the format `見直し_YYYYMMDD` (or your custom prefix if specified).
+The tag will be in the format `見直し::YYYYMMDD` (or your custom prefix if specified).
 
 Example usage in Claude:
 ```
