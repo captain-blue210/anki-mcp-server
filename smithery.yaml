@@ -1,0 +1,37 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required: []
+    properties:
+      ankiConnectUrl:
+        type: string
+        default: http://localhost:8765
+        description: The URL of the AnkiConnect API.
+      ankiConnectVersion:
+        type: number
+        default: 6
+        description: The version of the AnkiConnect API to use.
+      ankiMockMode:
+        type: boolean
+        default: false
+        description: Enable mock mode for testing (true/false).
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        ANKI_CONNECT_URL: config.ankiConnectUrl,
+        ANKI_CONNECT_VERSION: String(config.ankiConnectVersion),
+        ANKI_MOCK_MODE: config.ankiMockMode ? 'true' : 'false'
+      }
+    })
+  exampleConfig:
+    ankiConnectUrl: http://localhost:8765
+    ankiConnectVersion: 6
+    ankiMockMode: false
