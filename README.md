@@ -1,4 +1,5 @@
 # Anki MCP Server
+[![smithery badge](https://smithery.ai/badge/@captain-blue210/anki-mcp-server)](https://smithery.ai/server/@captain-blue210/anki-mcp-server)
 
 An MCP (Model Context Protocol) server for Claude Desktop that connects to Anki via AnkiConnect and retrieves leech-tagged cards.
 
@@ -18,6 +19,15 @@ An MCP (Model Context Protocol) server for Claude Desktop that connects to Anki 
 
 ## Installation
 
+### Installing via Smithery
+
+To install Anki MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@captain-blue210/anki-mcp-server):
+
+```bash
+npx -y @smithery/cli install @captain-blue210/anki-mcp-server --client claude
+```
+
+### Manual Installation
 1. Clone this repository:
    ```
    git clone https://github.com/yourusername/anki-mcp-server.git
