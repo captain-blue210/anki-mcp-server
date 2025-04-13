@@ -138,7 +138,8 @@ class AnkiConnectClient {
         }
       );
 
-      if (response.data.error) {
+      // errorがnullなら成功とみなす
+      if (response.data.error !== null) {
         throw new Error(`AnkiConnect error: ${response.data.error}`);
       }
 
@@ -689,46 +690,33 @@ class AnkiMcpServer {
     }
 
     // Add tags to cards
-    const success = await this.ankiClient.addTagsToCards(
-      cardIds,
-      customTagPrefix
-    );
+    // addTagsは成功してもresultもerrorもnullなので、例外発生しなければ成功
+    await this.ankiClient.addTagsToCards(cardIds, customTagPrefix);
 
-    if (success) {
-      const now = new Date();
-      const tagDate = `${now.getFullYear()}${String(
-        now.getMonth() + 1
-      ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-      const tagPrefix = customTagPrefix || "見直し";
+    const now = new Date();
+    const tagDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}${String(now.getDate()).padStart(2, "0")}`;
+    const tagPrefix = customTagPrefix || "見直し";
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(
-              {
-                message: `Successfully tagged ${cardIds.length} cards with '${tagPrefix}_${tagDate}'`,
-                tagged_cards: cardIds,
-                tag_added: `${tagPrefix}_${tagDate}`,
-                success: true,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    } else {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Failed to add tags to cards. Please check if the card IDs are valid.",
-          },
-        ],
-        isError: true,
-      };
-    }
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(
+            {
+              message: `Successfully tagged ${cardIds.length} cards with '${tagPrefix}_${tagDate}'`,
+              tagged_cards: cardIds,
+              tag_added: `${tagPrefix}_${tagDate}`,
+              success: true,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
   }
 
   /**
